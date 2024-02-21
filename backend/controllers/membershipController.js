@@ -101,6 +101,24 @@ exports.getPlan = catchAsyncErrors(async (req, res, next) => {
     });
 });
 
+//Get all plans
+exports.getAllPlans = catchAsyncErrors(async (req, res, next) => {
+
+    const user = req.user._id;
+
+    const allPlans = await MemberShip.find({ user });
+
+    if (!allPlans) {
+        return next(new ErrorHandler('No plans found for this user', 404));
+    }
+
+    res.status(200).json({
+        success: true,
+        allPlans,
+    });
+
+})
+
 
 //Get all memberships of a party by Id
 exports.getAllMemberships = catchAsyncErrors(async (req, res, next) => {
