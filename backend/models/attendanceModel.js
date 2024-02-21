@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const attendanceModel = new mongoose.Schema({
+
     party: {
         type: mongoose.Schema.ObjectId,
         ref: "Party",

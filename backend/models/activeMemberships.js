@@ -32,6 +32,12 @@ const activeMembershipsSchema = new mongoose.Schema({
         type: Number
     },
 
+    //----Added status---
+    activeStatus:{
+        type: Boolean,
+        required: true
+    },
+
     createdAt: {
         type: String,
     }

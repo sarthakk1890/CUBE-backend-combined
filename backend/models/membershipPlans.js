@@ -21,7 +21,7 @@ const membershipPlansSchema = new mongoose.Schema({
         type: Number
     },
 
-    amount: {
+    sellingPrice: {
         type: Number,
         required: true
     },

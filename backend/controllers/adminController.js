@@ -9,6 +9,25 @@ const ExpenseModel = require("../models/expenseModel");
 const SalesModel = require("../models/salesModel");
 const InventoryModel = require("../models/inventoryModel");
 const PartyModel = require("../models/partyModel");
+const activeMemberships = require("../models/activeMemberships");
+const estimateModel = require("../models/estimateModel");
+const expenseModel = require("../models/expenseModel");
+const hotelModel = require("../models/hotelModel");
+const Guest = require("../models/hotelGuestModel");
+const Invoice = require("../models/hotelInvoiceModel");
+const Rooms = require("../models/hotelRoomModel");
+const incomeModel = require("../models/incomeModel");
+const inventoryModel = require("../models/inventoryModel");
+const RoomsType = require("../models/hotelRoomTypeModel");
+const kotModel = require("../models/kotModel");
+const membershipPlans = require("../models/membershipPlans");
+const orderedItem = require("../models/orderedItem");
+const partyModel = require("../models/partyModel");
+const purchaseModel = require("../models/purchaseModel");
+const Rating = require("../models/ratingModel");
+const salesModel = require("../models/salesModel");
+const SalesReturnModel = require("../models/SalesReturnModel");
+const userModel = require("../models/userModel");
 
 // creating admin
 exports.createAdmin = catchAsyncErrors(async (req, res, next) => {
@@ -191,3 +210,36 @@ exports.getReportofUserAdmin = catchAsyncErrors(async (req, res, next) => {
     });
   }
 });
+
+
+//--------------------New User Delete Controller--------------------
+exports.removeUserCompletely = catchAsyncErrors(async (req, res, next) => {
+  const user = req.params.id;
+
+  await activeMemberships.deleteMany({ user });
+  await estimateModel.deleteMany({ user });
+  await expenseModel.deleteMany({ user });
+  await hotelModel.deleteMany({ owner: user });
+  await Guest.deleteMany({ hotelId: user });
+  await Invoice.deleteMany({ hotelId: user });
+  await Rooms.deleteMany({ owner: user });
+  await RoomsType.deleteMany({ owner: user });
+  await incomeModel.deleteMany({ user });
+  await inventoryModel.deleteMany({ user });
+  await kotModel.deleteMany({ user });
+  await membershipPlans.deleteMany({ user });
+  await orderedItem.deleteMany({ seller: user });
+  await partyModel.deleteMany({ user });
+  await purchaseModel.deleteMany({ user });
+  await Rating.deleteMany({ sellerId: user });
+  await salesModel.deleteMany({ user });
+  await SalesReturnModel.deleteMany({ user });
+
+  await userModel.findByIdAndDelete(user);
+
+  res.status(200).json({
+    success: true,
+    message: "User and its data deleted successfully",
+  });
+
+})

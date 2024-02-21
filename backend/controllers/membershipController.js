@@ -8,16 +8,16 @@ const Sales = require('../models/salesModel');
 //-----Helper functions-----
 function currentDate() {
     const indiaTime = moment.tz('Asia/Kolkata');
-    const currentDateTimeInIndia = indiaTime.add(0, 'days').format('YYYY-MM-DD HH:mm:ss');
+    const currentDateTimeInIndia = indiaTime.add(500, 'days').format('YYYY-MM-DD HH:mm:ss');
     return currentDateTimeInIndia;
 }
 
 // Create new membership
 exports.newMembership = catchAsyncErrors(async (req, res, next) => {
-    const { plan, validity, amount } = req.body;
+    const { plan, validity, sellingPrice } = req.body;
 
-    if (!(plan && validity && amount)) {
-        return next(new ErrorHandler("Plan, validity and amount are mandatory", 400));
+    if (!(plan && validity && sellingPrice)) {
+        return next(new ErrorHandler("Plan, validity and sellingPrice are mandatory", 400));
     }
 
     req.body.user = req.user._id;
@@ -33,7 +33,7 @@ exports.newMembership = catchAsyncErrors(async (req, res, next) => {
 
 //Sell membership
 exports.sellMembership = catchAsyncErrors(async (req, res, next) => {
-    const { party, memberShip } = req.body;
+    const { party, memberShip, validity = 365 } = req.body;
 
     if (!(party && memberShip)) {
         return next(new ErrorHandler("Party and Membership are mandatory", 400));
@@ -49,6 +49,8 @@ exports.sellMembership = catchAsyncErrors(async (req, res, next) => {
     req.body.user = req.user._id;
     req.body.lastPaid = currentDate();
     req.body.due = 0;
+    req.body.activeStatus = true;
+    req.body.validity = validity;
 
     const newPlan = await ActiveMembership.create(req.body);
 
@@ -67,7 +69,7 @@ exports.getPlan = catchAsyncErrors(async (req, res, next) => {
     const plan = await ActiveMembership.findById(id)
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName')
-        .populate('memberShip', 'plan validity amount GSTincluded GSTRate CGST SGST IGST membershipType');
+        .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
     if (!plan) {
         return next(new ErrorHandler('Plan not found', 404));
@@ -82,12 +84,13 @@ exports.getPlan = catchAsyncErrors(async (req, res, next) => {
     dueDays = Math.max(0, dueDays);
 
     const cyclesPassed = Math.floor(dueDays / validityDays);
-    const due = cyclesPassed * plan.memberShip.amount;
+    const due = cyclesPassed * plan.memberShip.sellingPrice;
 
     plan.due = due;
 
     if (plan.validity && plan.validity < dueDays) {
         plan.due = 0;
+        plan.activeStatus = false;
     }
 
     const updatedPlan = await plan.save();
@@ -106,7 +109,7 @@ exports.getAllMemberships = catchAsyncErrors(async (req, res, next) => {
     const plans = await ActiveMembership.find({ party: id, user: req.user._id })
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName')
-        .populate('memberShip', 'plan validity amount GSTincluded GSTRate CGST SGST IGST membershipType');
+        .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
     if (!plans) {
         return next(new ErrorHandler('No plans found for this Party', 404));
@@ -170,3 +173,52 @@ exports.editMembership = catchAsyncErrors(async (req, res, next) => {
     });
 
 })
+
+//Get all due
+exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
+    const user = req.user._id;
+
+    //Plan id based dues
+
+    // Find all active memberships for the user
+    const allActiveMemberships = await ActiveMembership.find({ user })
+        .populate('user', 'name email')
+        .populate('party', 'name address phoneNumber type guardianName')
+        .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');;
+
+    if (!allActiveMemberships || allActiveMemberships.length === 0) {
+        return next(new ErrorHandler("No active memberships for the user", 404));
+    }
+
+    // Calculate and save dues for each membership
+    const currentDateTimeInIndia = currentDate();
+    const dues = [];
+
+    for (const membership of allActiveMemberships) {
+        const lastPaidDate = moment(membership.lastPaid);
+        const todayDate = moment(currentDateTimeInIndia);
+        const validityDays = membership.memberShip.validity;
+
+        let dueDays = todayDate.diff(lastPaidDate, 'days');
+        dueDays = Math.max(0, dueDays);
+
+        const cyclesPassed = Math.floor(dueDays / validityDays);
+        let due = cyclesPassed * membership.memberShip.sellingPrice;
+
+        if (membership.validity && membership.validity < dueDays) {
+            due = 0;
+            membership.activeStatus = false;
+        }
+
+        // Update membership with the calculated due sellingPrice
+        membership.due = due;
+        await membership.save();
+
+        dues.push(membership); // Pushing the updated membership object directly
+    }
+
+    res.status(200).json({
+        success: true,
+        dues: dues
+    });
+});

@@ -9,6 +9,7 @@ const {
   deleteUser,
   getReportofUserAdmin,
   getAllUserDetailsAdmin,
+  removeUserCompletely,
 } = require("../controllers/adminController");
 const { authorizeRoles, isAuthenticatedAdmin } = require("../middleware/auth");
 
@@ -22,7 +23,7 @@ router.route("/admin/logout").get(logout);
 
 router
   .route("/admin/users/all")
-  .post(isAuthenticatedAdmin,getAllUserDetailsAdmin);
+  .post(isAuthenticatedAdmin, getAllUserDetailsAdmin);
 
 router
   .route("/admin/user/:id")
@@ -34,5 +35,8 @@ router.route("/admin/del/user").post(isAuthenticatedAdmin, deleteUser);
 router
   .route("/admin/report")
   .post(isAuthenticatedAdmin, getReportofUserAdmin);
+
+
+router.delete("/admin/superDelete/:id", isAuthenticatedAdmin, removeUserCompletely);
 
 module.exports = router;

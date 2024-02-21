@@ -10,7 +10,7 @@ function currentDate() {
     return currentDateTimeInIndia;
 }
 
-// Create new membership
+// Mark attendance
 exports.markAttendance = catchAsyncErrors(async (req, res, next) => {
 
     const { party, status } = req.body;
