@@ -30,8 +30,14 @@ const salesSchema = new mongoose.Schema({
       product: {
         type: mongoose.Schema.ObjectId,
         ref: "Product",
-        required: true,
+        // required: true,
       },
+      
+      membership: {
+        type: mongoose.Schema.ObjectId,
+        ref: "MembershipPlans",
+      },
+
       saleSGST: {
         type: Number,
       },
