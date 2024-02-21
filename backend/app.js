@@ -148,9 +148,10 @@ app.set("view engine", "ejs");
 const MongoStore = require('connect-mongo');
 app.use(express.urlencoded({ extended: true }));
 
+//-----Changed Cookie Name-------------
 app.use(
   session({
-    name: 'Hotel Manager',
+    name: 'HotelManager',
     secret: 'your-secret-key',
     saveUninitialized: false,
     resave: false,
