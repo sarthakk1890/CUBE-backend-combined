@@ -46,8 +46,10 @@ exports.sellMembership = catchAsyncErrors(async (req, res, next) => {
     }
 
     req.body.createdAt = currentDate();
-    req.body.user = req.user._id;
+    req.body.updatedAt = currentDate();
+    req.body.checkedAt = currentDate();
     req.body.lastPaid = currentDate();
+    req.body.user = req.user._id;
     req.body.due = 0;
     req.body.activeStatus = true;
     req.body.validity = validity;
@@ -75,29 +77,9 @@ exports.getPlan = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler('Plan not found', 404));
     }
 
-    const currentDateTimeInIndia = currentDate();
-    const lastPaidDate = moment(plan.lastPaid);
-    const todayDate = moment(currentDateTimeInIndia);
-    const validityDays = plan.membership.validity;
-
-    let dueDays = todayDate.diff(lastPaidDate, 'days');
-    dueDays = Math.max(0, dueDays);
-
-    const cyclesPassed = Math.floor(dueDays / validityDays);
-    const due = cyclesPassed * plan.membership.sellingPrice;
-
-    plan.due = due;
-
-    if (plan.validity && plan.validity < dueDays) {
-        plan.due = 0;
-        plan.activeStatus = false;
-    }
-
-    const updatedPlan = await plan.save();
-
     res.status(200).json({
         success: true,
-        updatedPlan,
+        plan,
     });
 });
 
@@ -152,6 +134,7 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
     }
 
     activeMember.lastPaid = paymentDate;
+    activeMember.due = activeMember.due - total;
 
     const savedActiveMember = await activeMember.save();
 
@@ -200,42 +183,12 @@ exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
     const allActiveMemberships = await ActiveMembership.find({ user })
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName createdAt')
-        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');;
+        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
-    if (!allActiveMemberships || allActiveMemberships.length === 0) {
-        return next(new ErrorHandler("No active memberships for the user", 404));
-    }
-
-    // Calculate and save dues for each membership
-    const currentDateTimeInIndia = currentDate();
-    const dues = [];
-
-    for (const membership of allActiveMemberships) {
-        const lastPaidDate = moment(membership.lastPaid);
-        const todayDate = moment(currentDateTimeInIndia);
-        const validityDays = membership.membership.validity;
-
-        let dueDays = todayDate.diff(lastPaidDate, 'days');
-        dueDays = Math.max(0, dueDays);
-
-        const cyclesPassed = Math.floor(dueDays / validityDays);
-        let due = cyclesPassed * membership.membership.sellingPrice;
-
-        if (membership.validity && membership.validity < dueDays) {
-            due = 0;
-            membership.activeStatus = false;
-        }
-
-        // Update membership with the calculated due sellingPrice
-        membership.due = due;
-        await membership.save();
-
-        dues.push(membership); // Pushing the updated membership object directly
-    }
 
     res.status(200).json({
         success: true,
-        dues: dues
+        dues: allActiveMemberships
     });
 });
 

@@ -10,6 +10,7 @@ const cors = require("cors");
 const multer = require("multer");
 var busboy = require("connect-busboy");
 const Inventory = require("./models/inventoryModel");
+const schedule = require("node-schedule");
 
 //CUBE HOTEL
 var expressLayouts = require('express-ejs-layouts');
@@ -165,7 +166,6 @@ app.use(
   })
 );
 
-
 app.use(flash());
 app.use(customMware.setFlash)
 
@@ -240,24 +240,20 @@ const expense = require("./routes/expenseRoute");
 const report = require("./routes/reportRoute");
 const table = require("./routes/tableRoute");
 const invoice = require("./routes/invoice")
-
 const consumer = require("./routes/consumerRoute");
-
 const payment = require("./routes/paymentRoutes");
 const subscribedUsersModel = require("./models/subscribedUsersModel");
 const agent = require("./routes/agentRoutes");
 const bulk = require("./routes/bulkUploads");
 const getShopRating = require("./routes/getShopRatingRoute");
 const forceUpdate = require("./routes/forceUpdateRoute");
-
 const estimate = require("./routes/estimateRoute");
-
 //----Import Hotel Routes
 const hotelIndex = require('./routes/hotelIndexRoute');
-
 //---Import Gym and School routes
 const gymSchool = require('./routes/membershipRoute');
 const attendance = require('./routes/attendanceRoute');
+const activeMemberships = require("./models/activeMemberships");
 
 const corsConfig = {
   origin: "http://localhost:5500",
@@ -334,10 +330,8 @@ app.use("/api/v1", getShopRating);
 app.use("/api/v1", forceUpdate);
 app.use("/api/v1", invoice);
 app.use("/api/v1", estimate);
-
 //----Hotel----
 app.use("/api/v1/hotel", hotelIndex);
-
 //----Gym and School---
 app.use("/api/v1/membership", gymSchool);
 app.use("/api/v1/attendance", attendance);
@@ -353,6 +347,47 @@ app.get("*", (req, res) => {
 app.use(errorMiddleware);
 // const forceUpdate = require("./routes/forceUpdateRoute");
 
+//-----------------Run Job schedule--------------------
+const moment = require('moment-timezone');
 
+function currentDate() {
+  const indiaTime = moment.tz('Asia/Kolkata');
+  const currentDateTimeInIndia = indiaTime.add(0, 'days').format('YYYY-MM-DD HH:mm:ss');
+  return currentDateTimeInIndia;
+}
+
+schedule.scheduleJob('0 0 * * 0', async () => {
+
+  const allActiveMemberships = await activeMemberships.find()
+    .populate('user', 'name email')
+    .populate('party', 'name address phoneNumber type guardianName createdAt')
+    .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
+
+  const currentDateTimeInIndia = currentDate();
+
+  for (const membership of allActiveMemberships) {
+    if (membership.activeStatus && moment(currentDateTimeInIndia) - moment(membership.checkedAt) > 7) {
+
+      if (moment(currentDateTimeInIndia) - moment(membership.createdAt) > membership.validity) {
+        membership.activeStatus = false;
+      }
+
+      const validityDays = membership.membership.validity;
+      const lastUpdated = moment(membership.updatedAt);
+      const todayDate = moment(currentDateTimeInIndia);
+
+      if (todayDate.diff(lastUpdated, 'days') > validityDays) {
+        membership.due = membership.due + membership.membership.sellingPrice;
+        membership.updatedAt = moment(currentDateTimeInIndia);
+      }
+
+      membership.checkedAt = moment(currentDateTimeInIndia);
+      await membership.save();
+
+    }
+  }
+})
+
+//-----------------------------------------------------
 
 module.exports = app;
