@@ -238,3 +238,19 @@ exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
         dues: dues
     });
 });
+
+
+//Delete Membership
+exports.deleteMembership = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+
+    await MemberShip.findByIdAndDelete(id);
+
+    await ActiveMembership.deleteMany({ memberShip: id });
+
+    res.status(200).json({
+        success: true,
+        message: "Membership Plan deleted successfully"
+    })
+
+})
