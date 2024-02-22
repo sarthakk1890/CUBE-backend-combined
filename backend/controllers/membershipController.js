@@ -199,7 +199,7 @@ exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
     // Find all active memberships for the user
     const allActiveMemberships = await ActiveMembership.find({ user })
         .populate('user', 'name email')
-        .populate('party', 'name address phoneNumber type guardianName')
+        .populate('party', 'name address phoneNumber type guardianName createdAt')
         .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');;
 
     if (!allActiveMemberships || allActiveMemberships.length === 0) {
