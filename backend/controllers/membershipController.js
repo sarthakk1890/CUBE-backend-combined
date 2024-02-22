@@ -8,7 +8,7 @@ const Sales = require('../models/salesModel');
 //-----Helper functions-----
 function currentDate() {
     const indiaTime = moment.tz('Asia/Kolkata');
-    const currentDateTimeInIndia = indiaTime.add(500, 'days').format('YYYY-MM-DD HH:mm:ss');
+    const currentDateTimeInIndia = indiaTime.add(0, 'days').format('YYYY-MM-DD HH:mm:ss');
     return currentDateTimeInIndia;
 }
 
