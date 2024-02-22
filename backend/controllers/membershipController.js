@@ -170,11 +170,11 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
 exports.getMembership = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
 
-    const memberShip = await MemberShip.findById(id);
+    const membership = await MemberShip.findById(id);
 
     res.status(200).json({
         success: true,
-        memberShip
+        membership
     });
 
 })
