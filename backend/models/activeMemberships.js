@@ -35,7 +35,7 @@ const activeMembershipsSchema = new mongoose.Schema({
     //----Added status---
     activeStatus:{
         type: Boolean,
-        required: true
+        // required: true
     },
 
     createdAt: {
