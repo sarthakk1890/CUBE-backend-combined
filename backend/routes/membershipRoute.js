@@ -13,7 +13,7 @@ router.route("/:id")
     .put(isAuthenticatedUser, editMembership)
     .get(isAuthenticatedUser, getMembership);
 
-router.get("/allDues", isAuthenticatedUser, getAllDues)
+router.post("/allDues", isAuthenticatedUser, getAllDues)
 
 router.post("/allPlans", isAuthenticatedUser, getAllPlans)
 

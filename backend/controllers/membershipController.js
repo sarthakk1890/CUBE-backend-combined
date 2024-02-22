@@ -119,7 +119,6 @@ exports.getAllPlans = catchAsyncErrors(async (req, res, next) => {
 
 })
 
-
 //Get all memberships of a party by Id
 exports.getAllMemberships = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params;
@@ -137,8 +136,7 @@ exports.getAllMemberships = catchAsyncErrors(async (req, res, next) => {
         success: true,
         plans,
     });
-})
-
+});
 
 //Payment made for Membership
 exports.payDue = catchAsyncErrors(async (req, res, next) => {
@@ -164,7 +162,7 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
         newSale,
         savedActiveMember
     });
-})
+});
 
 //GetMembership
 exports.getMembership = catchAsyncErrors(async (req, res, next) => {
@@ -177,7 +175,7 @@ exports.getMembership = catchAsyncErrors(async (req, res, next) => {
         memberShip
     });
 
-})
+});
 
 //EditMembership
 exports.editMembership = catchAsyncErrors(async (req, res, next) => {
@@ -190,7 +188,7 @@ exports.editMembership = catchAsyncErrors(async (req, res, next) => {
         updatedMemberShip
     });
 
-})
+});
 
 //Get all due
 exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
