@@ -66,7 +66,7 @@ const salesSchema = new mongoose.Schema({
 
   total: {
     type: Number,
-    // required: true,
+    required: true,
   },
   party: {
     type: mongoose.Schema.ObjectId,
