@@ -108,7 +108,7 @@ exports.getAllMemberships = catchAsyncErrors(async (req, res, next) => {
     const plans = await ActiveMembership.find({ party: id, user: req.user._id })
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName')
-        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
+        .populate('membership', 'plan validity sellingPrice basePrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
     if (!plans) {
         return next(new ErrorHandler('No plans found for this Party', 404));
