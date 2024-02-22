@@ -145,7 +145,7 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
     req.body.createdAt = currentDate();
     req.body.user = req.user._id;
 
-    const activeMember = await ActiveMembership.findOne({ user: req.user._id, party: party, memberShip: membership });
+    const activeMember = await ActiveMembership.findOne({ party: party, memberShip: membership });
 
     if (!activeMember) {
         return next(new ErrorHandler('No user found for this membership plan', 404));

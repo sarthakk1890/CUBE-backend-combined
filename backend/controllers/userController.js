@@ -158,6 +158,9 @@ exports.signUpWithPhoneNumber = catchAsyncErrors(async (req, res, next) => {
 
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   // Check if GstIN already exists
+
+  console.log(req.body);
+
   if (req.body.GstIN) {
     const existingUser = await User.findOne({ GstIN: req.body.GstIN });
     if (existingUser) {
