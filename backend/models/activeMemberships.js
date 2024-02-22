@@ -13,7 +13,7 @@ const activeMembershipsSchema = new mongoose.Schema({
         required: true
     },
 
-    memberShip: {
+    membership: {
         type: mongoose.Schema.ObjectId,
         ref: "MembershipPlans",
         required: true

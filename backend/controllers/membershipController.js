@@ -33,13 +33,13 @@ exports.newMembership = catchAsyncErrors(async (req, res, next) => {
 
 //Sell membership
 exports.sellMembership = catchAsyncErrors(async (req, res, next) => {
-    const { party, memberShip, validity = 365 } = req.body;
+    const { party, membership, validity = 365 } = req.body;
 
-    if (!(party && memberShip)) {
+    if (!(party && membership)) {
         return next(new ErrorHandler("Party and Membership are mandatory", 400));
     }
 
-    const existingPlan = await ActiveMembership.findOne({ party, memberShip });
+    const existingPlan = await ActiveMembership.findOne({ party, membership });
 
     if (existingPlan) {
         return next(new ErrorHandler("A plan with the provided party and membership already exists", 400));
@@ -69,7 +69,7 @@ exports.getPlan = catchAsyncErrors(async (req, res, next) => {
     const plan = await ActiveMembership.findById(id)
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName')
-        .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
+        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
     if (!plan) {
         return next(new ErrorHandler('Plan not found', 404));
@@ -78,13 +78,13 @@ exports.getPlan = catchAsyncErrors(async (req, res, next) => {
     const currentDateTimeInIndia = currentDate();
     const lastPaidDate = moment(plan.lastPaid);
     const todayDate = moment(currentDateTimeInIndia);
-    const validityDays = plan.memberShip.validity;
+    const validityDays = plan.membership.validity;
 
     let dueDays = todayDate.diff(lastPaidDate, 'days');
     dueDays = Math.max(0, dueDays);
 
     const cyclesPassed = Math.floor(dueDays / validityDays);
-    const due = cyclesPassed * plan.memberShip.sellingPrice;
+    const due = cyclesPassed * plan.membership.sellingPrice;
 
     plan.due = due;
 
@@ -126,7 +126,7 @@ exports.getAllMemberships = catchAsyncErrors(async (req, res, next) => {
     const plans = await ActiveMembership.find({ party: id, user: req.user._id })
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName')
-        .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
+        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
     if (!plans) {
         return next(new ErrorHandler('No plans found for this Party', 404));
@@ -145,7 +145,7 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
     req.body.createdAt = currentDate();
     req.body.user = req.user._id;
 
-    const activeMember = await ActiveMembership.findOne({ party: party, memberShip: membership });
+    const activeMember = await ActiveMembership.findOne({ party: party, membership: membership });
 
     if (!activeMember) {
         return next(new ErrorHandler('No user found for this membership plan', 404));
@@ -200,7 +200,7 @@ exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
     const allActiveMemberships = await ActiveMembership.find({ user })
         .populate('user', 'name email')
         .populate('party', 'name address phoneNumber type guardianName createdAt')
-        .populate('memberShip', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');;
+        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');;
 
     if (!allActiveMemberships || allActiveMemberships.length === 0) {
         return next(new ErrorHandler("No active memberships for the user", 404));
@@ -213,13 +213,13 @@ exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
     for (const membership of allActiveMemberships) {
         const lastPaidDate = moment(membership.lastPaid);
         const todayDate = moment(currentDateTimeInIndia);
-        const validityDays = membership.memberShip.validity;
+        const validityDays = membership.membership.validity;
 
         let dueDays = todayDate.diff(lastPaidDate, 'days');
         dueDays = Math.max(0, dueDays);
 
         const cyclesPassed = Math.floor(dueDays / validityDays);
-        let due = cyclesPassed * membership.memberShip.sellingPrice;
+        let due = cyclesPassed * membership.membership.sellingPrice;
 
         if (membership.validity && membership.validity < dueDays) {
             due = 0;
@@ -246,7 +246,7 @@ exports.deleteMembership = catchAsyncErrors(async (req, res, next) => {
 
     await MemberShip.findByIdAndDelete(id);
 
-    await ActiveMembership.deleteMany({ memberShip: id });
+    await ActiveMembership.deleteMany({ membership: id });
 
     res.status(200).json({
         success: true,
