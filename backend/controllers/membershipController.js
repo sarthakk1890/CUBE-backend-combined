@@ -175,21 +175,42 @@ exports.editMembership = catchAsyncErrors(async (req, res, next) => {
 
 //Get all due
 exports.getAllDues = catchAsyncErrors(async (req, res, next) => {
-    const user = req.user._id;
+    try {
+        const user = req.user._id;
 
-    //Plan id based dues
+        // Find all active memberships for the user
+        const allActiveMemberships = await ActiveMembership.find({ user })
+            .populate('user', 'name email')
+            .populate('party', 'name address phoneNumber type guardianName createdAt')
+            .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
 
-    // Find all active memberships for the user
-    const allActiveMemberships = await ActiveMembership.find({ user })
-        .populate('user', 'name email')
-        .populate('party', 'name address phoneNumber type guardianName createdAt')
-        .populate('membership', 'plan validity sellingPrice GSTincluded GSTRate CGST SGST IGST membershipType');
+        // Calculate total dues for each party using array reduce
+        const partyDuesMap = allActiveMemberships.reduce((acc, membership) => {
+            const partyId = membership.party._id;
+            const dues = membership.due; // Use 'due' instead of 'dues'
 
+            // If partyId not already in the map, initialize it with dues, else add dues to existing value
+            acc[partyId] = (acc[partyId] || 0) + dues;
+            return acc;
+        }, {});
 
-    res.status(200).json({
-        success: true,
-        dues: allActiveMemberships
-    });
+        // Convert partyDuesMap into array of objects with party information and total dues
+        const partyDuesArray = Object.keys(partyDuesMap).map(partyId => ({
+            party: allActiveMemberships.find(membership => membership.party._id.toString() === partyId.toString()).party,
+            totalDues: partyDuesMap[partyId]
+        }));
+
+        res.status(200).json({
+            success: true,
+            dues: partyDuesArray
+        });
+    } catch (error) {
+        console.error("Error occurred:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal Server Error"
+        });
+    }
 });
 
 
@@ -207,3 +228,16 @@ exports.deleteMembership = catchAsyncErrors(async (req, res, next) => {
     })
 
 })
+
+exports.getInactiveMemberships = catchAsyncErrors(async (req, res, next) => {
+    const userId = req.user._id;
+
+    const inactiveMemberships = await ActiveMembership.find({ user: userId, activeStatus: false })
+        .populate('user', 'name email')
+        .populate('party', 'name address phoneNumber type guardianName createdAt');
+
+    res.status(200).json({
+        success: true,
+        memberships: inactiveMemberships
+    });
+});

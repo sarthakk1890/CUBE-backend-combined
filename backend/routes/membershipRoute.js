@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { isAuthenticatedUser } = require("../middleware/auth");
-const { newMembership, sellMembership, getPlan, getAllMemberships, payDue, editMembership, getMembership, getAllDues, getAllPlans, deleteMembership } = require('../controllers/membershipController');
+const { newMembership, sellMembership, getPlan, getAllMemberships, payDue, editMembership, getMembership, getAllDues, getAllPlans, deleteMembership, getInactiveMemberships } = require('../controllers/membershipController');
 
 router.post("/new", isAuthenticatedUser, newMembership);
 router.post("/sell", isAuthenticatedUser, sellMembership);
@@ -17,5 +17,7 @@ router.route("/:id")
 router.post("/allDues", isAuthenticatedUser, getAllDues)
 
 router.post("/allPlans", isAuthenticatedUser, getAllPlans)
+
+router.post("/inactive", isAuthenticatedUser, getInactiveMemberships);
 
 module.exports = router; 
