@@ -358,6 +358,8 @@ function currentDate() {
 
 schedule.scheduleJob('0 0 * * 0', async () => {
 
+  console.log("Checked");
+
   const allActiveMemberships = await activeMemberships.find()
     .populate('user', 'name email')
     .populate('party', 'name address phoneNumber type guardianName createdAt')
@@ -368,7 +370,9 @@ schedule.scheduleJob('0 0 * * 0', async () => {
   for (const membership of allActiveMemberships) {
     if (membership.activeStatus && moment(currentDateTimeInIndia) - moment(membership.checkedAt) > 7) {
 
-      if (moment(currentDateTimeInIndia) - moment(membership.createdAt) > membership.validity) {
+      console.log(membership.validity)
+      console.log(moment(currentDateTimeInIndia).diff(moment(membership.createdAt), 'days'))
+      if (moment(currentDateTimeInIndia).diff(moment(membership.createdAt), 'days') > membership.validity) {
         membership.activeStatus = false;
       }
 
