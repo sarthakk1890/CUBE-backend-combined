@@ -134,7 +134,7 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
     }
 
     activeMember.lastPaid = paymentDate;
-    activeMember.due = activeMember.due - total;
+    activeMember.due = activeMember.due - req.body.total;
 
     const savedActiveMember = await activeMember.save();
 
