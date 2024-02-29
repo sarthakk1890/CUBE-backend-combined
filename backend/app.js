@@ -356,7 +356,7 @@ function currentDate() {
   return currentDateTimeInIndia;
 }
 
-schedule.scheduleJob('0 0 * * 0', async () => {
+schedule.scheduleJob('* * * * *', async () => {
 
   console.log("Checked");
 
