@@ -140,6 +140,9 @@ exports.payDue = catchAsyncErrors(async (req, res, next) => {
 
     const newSale = await Sales.create(req.body);
 
+    // Increment numSales in User model
+    await User.findByIdAndUpdate(req.user._id, { $inc: { numSales: 1 } });
+
     res.status(200).json({
         success: true,
         newSale,
