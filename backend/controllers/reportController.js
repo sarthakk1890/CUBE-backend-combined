@@ -38,10 +38,12 @@ exports.getReportofUser = catchAsyncErrors(async (req, res, next) => {
       {
         path: "orderItems",
         populate: { path: "product", model: InventoryModel },
+        populate: { path: "membership", select: "plan validity sellingPrice basePrice GSTincluded GSTRate CGST SGST IGST membershipType" }
       },
       "party",
       { path: "user", select: "taxFile" },
-    ]);
+    ])
+
 
     sales.map((value, idx) => {
       if (!value.modeOfPayment[0].mode) {
